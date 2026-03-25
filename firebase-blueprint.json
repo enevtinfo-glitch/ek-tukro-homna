@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "BloodRequest": {
+      "title": "Blood Request",
+      "description": "An emergency request for blood donation.",
+      "type": "object",
+      "properties": {
+        "bloodGroup": {
+          "type": "string",
+          "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+          "description": "The required blood group."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location where blood is needed."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The contact number for the request."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "fulfilled"],
+          "description": "The status of the request."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the request was created."
+        }
+      },
+      "required": ["bloodGroup", "location", "contactNumber", "status", "createdAt"]
+    },
+    "Donor": {
+      "title": "Donor",
+      "description": "A registered blood donor.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the donor."
+        },
+        "bloodGroup": {
+          "type": "string",
+          "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+          "description": "The donor's blood group."
+        },
+        "location": {
+          "type": "string",
+          "description": "The donor's location."
+        },
+        "mobileNumber": {
+          "type": "string",
+          "description": "The donor's mobile number."
+        },
+        "lastDonationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the last donation (optional)."
+        },
+        "donationCount": {
+          "type": "integer",
+          "description": "Number of times the donor has donated blood."
+        },
+        "donationHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "format": "date" },
+              "location": { "type": "string" }
+            }
+          },
+          "description": "History of previous donations."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The unique ID of the donor."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the donor registered."
+        }
+      },
+      "required": ["name", "bloodGroup", "location", "mobileNumber", "uid", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "App user with roles (Admin, Moderator, Editor).",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "moderator", "editor"],
+          "description": "The user's role."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The Firebase Auth UID."
+        }
+      },
+      "required": ["email", "role", "uid"]
+    }
+  },
+  "firestore": {
+    "/bloodRequests/{requestId}": {
+      "schema": "BloodRequest",
+      "description": "Collection of emergency blood requests."
+    },
+    "/donors/{donorId}": {
+      "schema": "Donor",
+      "description": "Collection of registered donors."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of app users with roles."
+    }
+  }
+}
