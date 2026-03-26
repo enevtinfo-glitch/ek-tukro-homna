@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { db, auth } from "../firebase";
-import { collection, addDoc, serverTimestamp, setDoc, doc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, setDoc, doc, query, where, getDocs } from "firebase/firestore";
 
 const SYSTEM_PROMPT = `You are an empathetic, fast, and helpful AI assistant for a non-profit Free Blood Donation Organization named "এক টুকরো হোমনা" (Ek Tukro Homna). Your main job is to help people in emergencies and assist blood donors.
 
@@ -109,9 +109,34 @@ export async function executeAction(action: { name: string, args: any }) {
         contactNumber,
         status: "pending",
         createdAt: serverTimestamp(),
-        uid: "anonymous"
+        uid: auth.currentUser?.uid || "anonymous"
       });
-      return { success: true, message: "ধন্যবাদ। আপনার রক্ত সাহায্যের আবেদনটি আমাদের সিস্টেমে জমা হয়েছে।" };
+
+      // Notify matching donors via SMS
+      try {
+        const donorsQuery = query(
+          collection(db, "donors"),
+          where("bloodGroup", "==", bloodGroup),
+          where("location", "==", location)
+        );
+        const donorDocs = await getDocs(donorsQuery);
+        const donorNumbers = donorDocs.docs.map(doc => doc.data().mobileNumber).filter(Boolean);
+
+        if (donorNumbers.length > 0) {
+          const message = `জরুরী রক্তের প্রয়োজন! গ্রুপ: ${bloodGroup}, স্থান: ${location}। যোগাযোগ: ${contactNumber}। - এক টুকরো হোমনা`;
+          
+          await fetch("/api/notify-donors", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ donors: donorNumbers, message })
+          });
+        }
+      } catch (smsError) {
+        console.error("Failed to trigger SMS notifications:", smsError);
+        // We don't fail the whole request if SMS fails
+      }
+
+      return { success: true, message: "ধন্যবাদ। আপনার রক্ত সাহায্যের আবেদনটি আমাদের সিস্টেমে জমা হয়েছে এবং সংশ্লিষ্ট রক্তদাতাদের জানানো হয়েছে।" };
     } catch (error) {
       console.error("Error saving blood request:", error);
       return { success: false, message: "দুঃখিত, তথ্যটি সংরক্ষণ করতে সমস্যা হয়েছে।" };
@@ -126,7 +151,7 @@ export async function executeAction(action: { name: string, args: any }) {
         location,
         mobileNumber,
         lastDonationDate: lastDonationDate || null,
-        uid: donorId,
+        uid: auth.currentUser?.uid || donorId,
         createdAt: serverTimestamp()
       });
       return { success: true, message: "অভিনন্দন! আপনি সফলভাবে রক্তদাতা হিসেবে নিবন্ধিত হয়েছেন।" };

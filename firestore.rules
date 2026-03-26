@@ -41,26 +41,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
     function isAdmin() {
       return isAuthenticated() &&
-        ( (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserRole() == 'admin') ||
-          (request.auth.token.email == "enevtinfo@gmail.com") );
+        ( (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email == "enevtinfo@gmail.com" && request.auth.token.email_verified == true) );
     }
 
     function isModerator() {
-      return isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserRole() in ['admin', 'moderator']);
+      return isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator']);
     }
 
     function isEditor() {
-      return isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserRole() in ['admin', 'moderator', 'editor']);
+      return isAdmin() || (isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator', 'editor']);
     }
 
     function isValidBloodGroup(bg) {
@@ -117,10 +113,10 @@ service cloud.firestore {
       allow read: if true;
       // Public creation allowed as per user request (no login needed)
       allow create: if isValidBloodRequest(request.resource.data);
-      // Updates require editor role and must maintain data validity
-      allow update: if isEditor() && isValidBloodRequest(request.resource.data);
-      // Deletion requires moderator role
-      allow delete: if isModerator();
+      // Updates require editor role OR ownership
+      allow update: if (isEditor() || isOwner(resource.data.uid)) && isValidBloodRequest(request.resource.data);
+      // Deletion requires moderator role OR ownership
+      allow delete: if isModerator() || isOwner(resource.data.uid);
     }
 
     // Donors:
@@ -128,10 +124,10 @@ service cloud.firestore {
       allow read: if true;
       // Public creation allowed as per user request (no login needed)
       allow create: if isValidDonor(request.resource.data);
-      // Updates require editor role and must maintain data validity
-      allow update: if isEditor() && isValidDonor(request.resource.data);
-      // Deletion requires moderator role
-      allow delete: if isModerator();
+      // Updates require editor role OR ownership
+      allow update: if (isEditor() || isOwner(resource.data.uid)) && isValidDonor(request.resource.data);
+      // Deletion requires moderator role OR ownership
+      allow delete: if isModerator() || isOwner(resource.data.uid);
     }
 
     // Users (Roles):

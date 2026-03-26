@@ -81,18 +81,18 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-[500px] sm:h-[600px] w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 relative">
-      <div className="bg-red-600 p-4 text-white flex items-center gap-3">
-        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-          <Bot size={24} />
+    <div className="flex flex-col h-[calc(100vh-280px)] sm:h-[600px] w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 relative">
+      <div className="bg-red-600 p-3 sm:p-4 text-white flex items-center gap-3">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <Bot size={20} className="sm:w-6 sm:h-6" />
         </div>
         <div>
-          <h2 className="font-semibold text-lg">এক টুকরো হোমনা</h2>
-          <p className="text-red-100 text-xs">রক্তদান সহকারী</p>
+          <h2 className="font-semibold text-sm sm:text-lg leading-tight">এক টুকরো হোমনা</h2>
+          <p className="text-red-100 text-[10px] sm:text-xs">রক্তদান সহকারী</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 bg-slate-50">
         <AnimatePresence initial={false}>
           {messages.map((msg, idx) => (
             <motion.div
@@ -114,13 +114,13 @@ export default function Chat() {
                   {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
                 </div>
                 <div
-                  className={`p-3 rounded-2xl text-sm leading-relaxed ${
+                  className={`p-3 rounded-2xl text-sm leading-relaxed break-words overflow-hidden ${
                     msg.role === 'user'
                       ? 'bg-red-600 text-white rounded-tr-none'
                       : 'bg-white text-slate-700 shadow-sm border border-slate-100 rounded-tl-none'
                   }`}
                 >
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none break-words overflow-hidden">
                     <Markdown>
                       {msg.parts[0].text}
                     </Markdown>
